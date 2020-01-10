@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset=utf-8>
+    <title>three.js app</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script src="OrbitControls.js"></script>
+    <script>
+      // création du renderer
+      var renderer = new THREE.WebGLRenderer();
+      document.body.appendChild(renderer.domElement);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // création de la caméra
+      var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 1000);
+
+      var textureLoader = new THREE.TextureLoader();
+
+      // création de la scène
+      var scene = new THREE.Scene();
+
+      
+      // couleur de fond noire
+      scene.background = new THREE.Color(0, 0, 0);
+
+        // création du groupe
+      var group = new THREE.Group();
+      scene.add(group);
+
+      var sun = new THREE.DirectionalLight();
+      sun.position.set(2, 2, 1);
+      scene.add(sun);
+      
+      var ambientLight = new THREE.AmbientLight(0xffffff, .1);
+      scene.add(ambientLight);
+
+      var sun = new THREE.DirectionalLight();
+      sun.position.set(2, 2, 1);
+      scene.add(sun);
+
+      var geometry1 = new THREE.SphereGeometry( 6.378, 32, 32 );
+      var material1 = new THREE.MeshPhongMaterial();
+      var sphere1 = new THREE.Mesh( geometry1, material1 );
+      //sphere1.add(new THREE.AxesHelper(13));
+      //sphere1.position.x = 0;
+      scene.add(sphere1);
+      //group.add( sphere1 );
+
+      var geometry3 = new THREE.SphereGeometry( 6.5, 32, 32 );
+      var material3 = new THREE.MeshPhongMaterial();
+      material3.transparent = true;
+      var sphere3 = new THREE.Mesh( geometry3, material3 );
+      //sphere1.position.x = 0;
+      scene.add(sphere3);
+      var texture3 = textureLoader.load("https://spoonless.github.io/tuto_threejs/maps/earth/earth_cloud.jpg");
+      sphere3.material.alphaMap = texture3;
+
+      // positionnement de la caméra
+      camera.position.z = 20;
+      camera.position.y = 7;
+
+      scene.background = new THREE.CubeTextureLoader().load( [
+		'https://spoonless.github.io/tuto_threejs/maps/milkyway/1.jpg',
+		'https://spoonless.github.io/tuto_threejs/maps/milkyway/2.jpg',
+		'https://spoonless.github.io/tuto_threejs/maps/milkyway/3.jpg',
+		'https://spoonless.github.io/tuto_threejs/maps/milkyway/4.jpg',
+		'https://spoonless.github.io/tuto_threejs/maps/milkyway/5.jpg',
+		'https://spoonless.github.io/tuto_threejs/maps/milkyway/6.jpg'
+    ] );
+    
+      renderer.shadowMap.enabled = true;
+      sphere1.castShadow = true;
+      sun.castShadow = true;
+      //camera.rotateX(.2);
+      camera.lookAt(sphere1.position);
+
+      var texture1 = textureLoader.load("https://spoonless.github.io/tuto_threejs/maps/earth/earth_color.jpg");
+      sphere1.material.map = texture1;
+
+      var texture3 = textureLoader.load("https://spoonless.github.io/tuto_threejs/maps/earth/earth_normal.jpg");
+      sphere1.material.normalMap = texture3;
+
+      // Création du contrôleur
+      var controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.minDistance = 10;
+      controls.maxDistance = 70;
+
+      function animate() {
+        sphere1.rotateY(.003);
+        sphere3.rotateY(.002);
+      
+        //group.rotateY(.005);
+        controls.update();
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      function updateViewportSize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+window.addEventListener("resize", updateViewportSize);
+updateViewportSize();
+    </script>
+  </body>
+</html>
