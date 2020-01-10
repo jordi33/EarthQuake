@@ -13,6 +13,7 @@
   <body>
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="OrbitControls.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script>
       // création du renderer
       var renderer = new THREE.WebGLRenderer();
@@ -94,8 +95,8 @@
       controls.maxDistance = 70;
 
       function animate() {
-        sphere1.rotateY(.003);
-        sphere3.rotateY(.002);
+        //sphere1.rotateY(.003);
+        //sphere3.rotateY(.002);
       
         //group.rotateY(.005);
         controls.update();
@@ -110,6 +111,38 @@
         camera.updateProjectionMatrix()
         renderer.setSize(window.innerWidth, window.innerHeight);
       }
+    $.getJSON('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson', function(data) { 
+    //var count = Object.keys(data["features"]).length;
+    
+    for(var k = 0; k<data["features"].length;k++){
+      console.log(data["features"][k].geometry.coordinates);
+    }
+    //handleLoadedGeometry(data["features"], count);
+
+    });
+
+    function calcPosFromLatLonRad(radius, lat, lon) {
+
+var spherical = new THREE.Spherical(
+  radius,
+  THREE.Math.degToRad(90 - lon),
+  THREE.Math.degToRad(lat)
+);
+
+var vector = new THREE.Vector3();
+vector.setFromSpherical(spherical);
+//vector.add( axesHelper );
+camera.lookAt(vector.x, vector.y, vector.z);
+console.log(vector.x, vector.y, vector.z);
+return vector;
+}
+
+calcPosFromLatLonRad(6.378, 52.520008, 13.404954);
+var texture = new THREE.TextureLoader().load( "rond.jpg" );
+texture.wrapS = THREE.RepeatWrapping;
+texture.wrapT = THREE.RepeatWrapping;
+texture.repeat.set(15, 15);
+renderer.render(scene, camera);
 
 window.addEventListener("resize", updateViewportSize);
 updateViewportSize();
