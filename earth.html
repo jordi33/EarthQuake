@@ -11,6 +11,13 @@
     </style>
   </head>
   <body>
+
+    <div style="position: absolute;z-index: 10; background-color: azure;">
+      <div>
+        <button id="goCamera">TOUS AUX ABRIS !</button>
+      </div>
+    </div>
+
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="OrbitControls.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
@@ -28,7 +35,6 @@
       // création de la scène
       var scene = new THREE.Scene();
 
-      
       // couleur de fond noire
       scene.background = new THREE.Color(0, 0, 0);
 
@@ -54,7 +60,7 @@
       //sphere1.position.x = 0;
       group.add(sphere1);
       //group.add( sphere1 );
-
+      var jsonData = "";
       var geometry3 = new THREE.SphereGeometry( 6.5, 32, 32 );
       var material3 = new THREE.MeshPhongMaterial();
       material3.transparent = true;
@@ -89,6 +95,7 @@
       var texture3 = textureLoader.load("https://spoonless.github.io/tuto_threejs/maps/earth/earth_normal.jpg");
       sphere1.material.normalMap = texture3;
 
+      var isBtnClicked = false;
       // Création du contrôleur
       var controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.minDistance = 10;
@@ -99,7 +106,10 @@
         // rotation nuages + groupe terre tremblements
 
         sphere3.rotateY(.001);
-        group.rotateY(.002);
+        if(isBtnClicked == false){
+          group.rotateY(.002);
+        }
+        
 
         //animation tremblements
         
@@ -118,10 +128,7 @@
           }else{
             changeScale = false;
           }
-          
-
         }
-
         } );
         controls.update();
         requestAnimationFrame(animate);
@@ -137,14 +144,14 @@
       }
       
       function lonLatToVector3( lon, lat,radius)
-{
+    {
     var phi   = (90-lat)*(Math.PI/180),
         theta = (lon+180)*(Math.PI/180),
         x = -((radius) * Math.sin(phi)*Math.cos(theta)),
         z = ((radius) * Math.sin(phi)*Math.sin(theta)),
         y = ((radius) * Math.cos(phi));
     return new THREE.Vector3(x,y,z);
-}
+    }
 //  https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson
 loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
 
@@ -154,11 +161,28 @@ loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
     var material = new THREE.MeshBasicMaterial( { color: 0xe60000 } );
     var materialLow = new THREE.MeshBasicMaterial( { color: 0xff3300 } );
     var materialHigh = new THREE.MeshBasicMaterial( { color: 0x4d0000 } );
+    jsonData = data["features"];
     for(var k = 0; k<data["features"].length;k++){
-      // Dirtyyyy => si j'avais le temps, on vérifierai les répliques de tremblement !! Puerto rico
-        if(k != 8 && k != 11 && k != 5 && k != 1 && k != 2 && k != 3){
-          var coord = data["features"][k].geometry.coordinates;
-          var mag = data["features"][k].properties.mag;
+
+      var isReplique = false;
+      var coord = data["features"][k].geometry.coordinates;
+      var mag = data["features"][k].properties.mag;
+
+      // verification replique du tremblement
+      for(var j = 0; j<data["features"].length;j++){
+        
+        var coordJ = data["features"][j].geometry.coordinates;
+        var magJ = data["features"][j].properties.mag;
+        var diffX = Math.abs( coordJ[0] - coord[0] );
+        var diffY = Math.abs( coordJ[1] - coord[1] );
+
+          if(k!=j && diffX < 2 && diffY < 2 && mag < magJ){
+              isReplique = true;  
+          }
+
+      }
+        if(isReplique == false){  
+
           var geometry = new THREE.TorusGeometry( mag/10, 0.04, 16, 100 );
           var geometryHigh = new THREE.TorusGeometry( mag/10, 0.1, 16, 100 );
           var geometryLow = new THREE.TorusGeometry( mag/10, 0.01, 16, 100 );
@@ -170,44 +194,20 @@ loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
             var earthquake = new THREE.Mesh( geometry, material );
           }
           
-          earthquake.name = "earthquake"+k;
+          earthquake.name = "earthquake-"+mag;
           group.add(earthquake);
           var vect = lonLatToVector3(coord[0], coord[1], 6.45);
           earthquake.position.set(vect.x,vect.y,vect.z);
           earthquake.lookAt(sphere1.position);
 
-          /*var vectPlane = lonLatToVector3(coord[0]+11, coord[1], 6.7);
-          var geometryPlane = new THREE.PlaneGeometry( 0.5, 0.25, 32 );
-          var materialPlane = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-          var plane = new THREE.Mesh( geometryPlane, materialPlane );
-          //group.add(plane);
-          plane.position.set(vectPlane.x,vectPlane.y,vectPlane.z);
-          plane.lookAt(sphere1.position);
-          //plane.rotateX(60);
-
-          var axesHelper = new THREE.AxesHelper( 15 );
-          plane.add( axesHelper );*/
-
-          // également dirty : trouver une formule serait mieux
-
-          if(coord[1]>60){
-            var vectText = lonLatToVector3(coord[0], coord[1]-10, 6.55);
-          }else if(coord[1]>50){
-            var vectText = lonLatToVector3(coord[0]+31, coord[1], 6.55);
-          }else if(coord[1]>38){
-            var vectText = lonLatToVector3(coord[0]+28, coord[1], 6.55);
-          }else if(coord[1]>25){
-            var vectText = lonLatToVector3(coord[0]+22, coord[1], 6.55);
-          }else{
-            var vectText = lonLatToVector3(coord[0]+20, coord[1], 6.55);
-          }
+          var vectText = lonLatToVector3(coord[0], coord[1]-10, 6.55);
 
           var time = data["features"][k].properties.time;
-          var d = new Date(time); // en js
+          var d = new Date(time);
           var datestring = ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
               d.getFullYear();
 
-          var geometryText = new THREE.TextGeometry( 'Magnitude ' + mag.toFixed(1) + ', ' + datestring, {
+          var geometryText = new THREE.TextGeometry( 'Magnitude ' + mag.toFixed(1) + '\n ' + datestring, {
             font: font,
             size: 0.16,
             height: 0.0001,
@@ -240,9 +240,36 @@ loader.load( 'helvetiker_regular.typeface.json', function ( font ) {
     
   });
 });
+document.getElementById("goCamera").style.backgroundColor = 'azure';
+function updateCamera(){
+  
+  if(isBtnClicked == false){
+    isBtnClicked = true;
+    document.getElementById("goCamera").style.backgroundColor = 'red';
+    scene.traverse( function( node ) {
+        if ( node instanceof THREE.Mesh && node.name.includes("earthquake")) {
+          if(node.name.split('-')[1]>6.3){
+            sphere1.updateMatrixWorld();
+            var vector = new THREE.Vector3();
+            vector.setFromMatrixPosition( node.matrixWorld );
+            camera.position.x = vector.x;
+            camera.position.y = vector.y;
+            camera.position.z = vector.z;
+          }
+        }
+        } );
+  }else{
+    isBtnClicked = false;
+    document.getElementById("goCamera").style.backgroundColor = 'azure';
+    camera.position.z = 20;
+    camera.position.y = 7;
+    camera.lookAt(sphere1.position);
+  }
+  
+}
 
 renderer.render(scene, camera);
-
+document.getElementById("goCamera").addEventListener("click",updateCamera);
 window.addEventListener("resize", updateViewportSize);
 updateViewportSize();
     </script>
